@@ -2,106 +2,246 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sekai & Bad Apple Mini-App</title>
-    <!-- Подключаем скрипт Telegram Web Apps -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sekai Rhythm Game</title>
     <script src="https://telegram.org"></script>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', Arial, sans-serif;
             background-color: #0b0f19;
-            color: #ffffff;
-            text-align: center;
-            padding: 20px;
+            color: #fff;
             margin: 0;
+            padding: 0;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
         }
-        h1 { font-size: 22px; color: #00ffcc; text-shadow: 0 0 10px #00ffcc; margin-bottom: 5px; }
-        p { color: #8a99ad; font-size: 14px; margin-bottom: 30px; }
-        
-        .btn {
-            display: block;
-            width: 85%;
-            margin: 15px auto;
-            padding: 18px;
-            font-size: 16px;
+        #menu {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(11, 15, 25, 0.95);
+            z-index: 10;
+        }
+        h1 { color: #00ffcc; text-shadow: 0 0 10px #00ffcc; margin-bottom: 20px; }
+        .menu-btn {
+            width: 80%;
+            padding: 15px;
+            margin: 10px 0;
+            font-size: 18px;
             font-weight: bold;
             color: #fff;
             background: linear-gradient(135deg, #1f293d 0%, #111827 100%);
             border: 2px solid #374151;
             border-radius: 12px;
             cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
-        /* Стили для каждой кнопки при активации */
-        .btn-badapple:active, .btn-badapple.playing {
-            border-color: #ff0055;
-            box-shadow: 0 0 15px #ff0055;
-            background: #ff0055;
+        .menu-btn:active { border-color: #00ffcc; }
+        
+        /* Игровое поле */
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: none;
         }
-        .btn-sekai:active, .btn-sekai.playing {
-            border-color: #00ffcc;
-            box-shadow: 0 0 15px #00ffcc;
-            background: #00ffcc;
-            color: #000;
+        /* 4 дорожки для нот */
+        .track-container {
+            display: flex;
+            width: 100%;
+            height: 85%;
+            position: relative;
+            background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(255,255,255,0.03) 100%);
         }
-        .btn-stop {
-            background: #374151;
-            border: 1px solid #4b5563;
-            margin-top: 40px;
-            width: 50%;
-            padding: 10px;
+        .track {
+            flex: 1;
+            height: 100%;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
         }
-        .btn-stop:active { background: #ef4444; border-color: #ef4444; }
+        .track:last-child { border-right: none; }
+        
+        /* Клавиши для нажатия (Линия тапа как в Секае) */
+        .hit-zone {
+            display: flex;
+            width: 100%;
+            height: 15%;
+            background: #111827;
+            border-top: 4px solid #00ffcc;
+            box-shadow: 0 -5px 15px rgba(0, 255, 255, 0.2);
+        }
+        .hit-button {
+            flex: 1;
+            height: 100%;
+            background: transparent;
+            border: none;
+            color: #4b5563;
+            font-size: 24px;
+            font-weight: bold;
+            outline: none;
+        }
+        .hit-button:active {
+            background: rgba(0, 255, 258, 0.2);
+            color: #00ffcc;
+        }
+
+        /* Ноты */
+        .note {
+            position: absolute;
+            width: 90%;
+            left: 5%;
+            height: 20px;
+            background: linear-gradient(90deg, #00ffcc, #0099ff);
+            border-radius: 10px;
+            box-shadow: 0 0 10px #00ffcc;
+            transform: translateY(-20px);
+        }
+        
+        #score-board {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #00ffcc;
+            z-index: 5;
+        }
     </style>
 </head>
 <body>
 
-    <h1>🎵 РИТМ-ПАНЕЛЬ 🎵</h1>
-    <p>Нажми на клавишу для воспроизведения трека</p>
+    <!-- Главное меню выбора песни -->
+    <div id="menu">
+        <h1>🎵 SEKAI RHYTHM 🎵</h1>
+        <p style="color:#8a99ad;">Выбери трек и тапай в ритм!</p>
+        <button class="menu-btn" onclick="startGame('bad_apple')">🍎 Bad Apple!!</button>
+        <button class="menu-btn" onclick="startGame('sekai')">✨ Project SEKAI</button>
+    </div>
 
-    <!-- Кнопки плеера -->
-    <button class="btn btn-badapple" onclick="playAudio('bad_apple', this)">🍎 Bad Apple!! (Touhou Project)</button>
-    <button class="btn btn-sekai" onclick="playAudio('sekai', this)">✨ SEKAI (DECO*27 x kemu)</button>
-    <button class="btn btn-stop" onclick="stopAudio()">⏹️ Остановить звук</button>
-    
-    <!-- НАСТОЯЩИЕ РАБОЧИЕ АУДИОФАЙЛЫ -->
+    <!-- Игровой экран -->
+    <div id="game-container">
+        <div id="score-board">Счет: <span id="score">0</span></div>
+        
+        <div class="track-container">
+            <div class="track" id="track-0"></div>
+            <div class="track" id="track-1"></div>
+            <div class="track" id="track-2"></div>
+            <div class="track" id="track-3"></div>
+        </div>
+        
+        <!-- Кнопки внизу экрана для тапов -->
+        <div class="hit-zone">
+            <button class="hit-button" onmousedown="tapTrack(0)" ontouchstart="tapTrack(0)">⏳</button>
+            <button class="hit-button" onmousedown="tapTrack(1)" ontouchstart="tapTrack(1)">⏳</button>
+            <button class="hit-button" onmousedown="tapTrack(2)" ontouchstart="tapTrack(2)">⏳</button>
+            <button class="hit-button" onmousedown="tapTrack(3)" ontouchstart="tapTrack(3)">⏳</button>
+        </div>
+    </div>
+
+    <!-- Аудиофайлы -->
     <audio id="bad_apple" src="https://archive.org" preload="auto"></audio>
     <audio id="sekai" src="https://googleapis.com" preload="auto"></audio>
 
-
     <script>
-        // Инициализация Telegram Web App
         const tg = window.Telegram.WebApp;
         tg.ready();
-        tg.expand(); 
+        tg.expand();
 
+        let score = 0;
+        let gameInterval;
+        let noteInterval;
         let currentAudio = null;
-        let currentButton = null;
+        let activeNotes = [];
+        const trackHeights = 0.85 * window.innerHeight; // Высота зоны падения нот
+        const noteSpeed = 5; // Скорость падения нот
 
-        function playAudio(id, btnElement) {
-            // Сбрасываем прошлое состояние
-            stopAudio();
+        function startGame(songId) {
+            document.getElementById('menu').style.display = 'none';
+            document.getElementById('game-container').style.display = 'block';
             
-            // Запускаем выбранный трек
-            currentAudio = document.getElementById(id);
-            currentButton = btnElement;
+            score = 0;
+            document.getElementById('score').innerText = score;
+
+            currentAudio = document.getElementById(songId);
+            currentAudio.currentTime = 0;
+            currentAudio.play().catch(() => {
+                alert("Ошибка звука. Пожалуйста, перезапустите приложение.");
+            });
+
+            // Каждые 600 миллисекунд создаем новую случайную ноту
+            noteInterval = setInterval(createNote, 600);
             
-            currentAudio.play().then(() => {
-                currentButton.classList.add('playing');
-            }).catch(e => {
-                alert("Нажмите на экран еще раз для активации плеера!");
+            // Основной цикл анимации падения нот
+            gameInterval = setInterval(updatePhysics, 16);
+        }
+
+        function createNote() {
+            if (currentAudio.paused) {
+                endGame();
+                return;
+            }
+            const trackId = Math.floor(Math.random() * 4);
+            const trackElement = document.getElementById(`track-${trackId}`);
+            
+            const note = document.createElement('div');
+            note.className = 'note';
+            note.style.top = '0px';
+            trackElement.appendChild(note);
+            
+            activeNotes.push({
+                element: note,
+                track: trackId,
+                y: 0
             });
         }
 
-        function stopAudio() {
+        function updatePhysics() {
+            for (let i = activeNotes.length - 1; i >= 0; i--) {
+                let note = activeNotes[i];
+                note.y += noteSpeed;
+                note.element.style.top = note.y + 'px';
+                
+                // Если нота улетела ниже линии тапа без нажатия
+                if (note.y > trackHeights) {
+                    note.element.remove();
+                    activeNotes.splice(i, 1);
+                }
+            }
+        }
+
+        // Логика нажатия на дорожку
+        function tapTrack(trackId) {
+            // Ищем самую нижнюю ноту на этой дорожке
+            for (let i = 0; i < activeNotes.length; i++) {
+                let note = activeNotes[i];
+                if (note.track === trackId) {
+                    // Проверяем, находится ли нота близко к линии нажатия (в пределах 60 пикселей)
+                    if (note.y > trackHeights - 80 && note.y < trackHeights) {
+                        score += 100;
+                        document.getElementById('score').innerText = score;
+                        note.element.remove();
+                        activeNotes.splice(i, 1);
+                        break;
+                    }
+                }
+            }
+        }
+
+        function endGame() {
+            clearInterval(gameInterval);
+            clearInterval(noteInterval);
+            activeNotes.forEach(n => n.element.remove());
+            activeNotes = [];
             if (currentAudio) {
                 currentAudio.pause();
-                currentAudio.currentTime = 0;
             }
-            if (currentButton) {
-                currentButton.classList.remove('playing');
-            }
+            alert(`Игра окончена! Ваш счет: ${score}`);
+            document.getElementById('game-container').style.display = 'none';
+            document.getElementById('menu').style.display = 'flex';
         }
     </script>
 </body>

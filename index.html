@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sekai & Bad Apple Mini-App</title>
+    <!-- Подключаем скрипт Telegram Web Apps -->
+    <script src="https://telegram.org"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0b0f19;
+            color: #ffffff;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+        h1 { font-size: 22px; color: #00ffcc; text-shadow: 0 0 10px #00ffcc; margin-bottom: 5px; }
+        p { color: #8a99ad; font-size: 14px; margin-bottom: 30px; }
+        
+        .btn {
+            display: block;
+            width: 85%;
+            margin: 15px auto;
+            padding: 18px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #fff;
+            background: linear-gradient(135deg, #1f293d 0%, #111827 100%);
+            border: 2px solid #374151;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        /* Стили для каждой кнопки при активации */
+        .btn-badapple:active, .btn-badapple.playing {
+            border-color: #ff0055;
+            box-shadow: 0 0 15px #ff0055;
+            background: #ff0055;
+        }
+        .btn-sekai:active, .btn-sekai.playing {
+            border-color: #00ffcc;
+            box-shadow: 0 0 15px #00ffcc;
+            background: #00ffcc;
+            color: #000;
+        }
+        .btn-stop {
+            background: #374151;
+            border: 1px solid #4b5563;
+            margin-top: 40px;
+            width: 50%;
+            padding: 10px;
+        }
+        .btn-stop:active { background: #ef4444; border-color: #ef4444; }
+    </style>
+</head>
+<body>
+
+    <h1>🎵 РИТМ-ПАНЕЛЬ 🎵</h1>
+    <p>Нажми на клавишу для воспроизведения трека</p>
+
+    <!-- Кнопки плеера -->
+    <button class="btn btn-badapple" onclick="playAudio('bad_apple', this)">🍎 Bad Apple!! (Touhou Project)</button>
+    <button class="btn btn-sekai" onclick="playAudio('sekai', this)">✨ SEKAI (DECO*27 x kemu)</button>
+    <button class="btn btn-stop" onclick="stopAudio()">⏹️ Остановить звук</button>
+
+    <!-- Прямые аудиопотоки для проверки работы плеера -->
+    <audio id="bad_apple" src="https://soundhelix.com"></audio>
+    <audio id="sekai" src="https://soundhelix.com"></audio>
+
+    <script>
+        // Инициализация Telegram Web App
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand(); 
+
+        let currentAudio = null;
+        let currentButton = null;
+
+        function playAudio(id, btnElement) {
+            // Сбрасываем прошлое состояние
+            stopAudio();
+            
+            // Запускаем выбранный трек
+            currentAudio = document.getElementById(id);
+            currentButton = btnElement;
+            
+            currentAudio.play().then(() => {
+                currentButton.classList.add('playing');
+            }).catch(e => {
+                alert("Нажмите на экран еще раз для активации плеера!");
+            });
+        }
+
+        function stopAudio() {
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+            }
+            if (currentButton) {
+                currentButton.classList.remove('playing');
+            }
+        }
+    </script>
+</body>
+</html>
